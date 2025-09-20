@@ -14,6 +14,9 @@ COPY prisma ./prisma
 # Instala as dependências
 RUN npm install --legacy-peer-deps
 
+# Gera o cliente Prisma para o ambiente do contêiner
+RUN npx prisma generate
+
 # Agora copia o resto do projeto
 COPY . .
 
