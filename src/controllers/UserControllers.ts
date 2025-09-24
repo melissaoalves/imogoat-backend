@@ -14,6 +14,14 @@ const email_user = process.env.EMAIL_USER as string;
 const userRepository = new UserRepository();
 
 export class UserController {
+  /**
+   * Cria um novo usuário no sistema.
+   *
+   * @route POST /users
+   * @param {Request} req - Requisição contendo os campos username, email, password, phoneNumber e role.
+   * @param {Response} res - Resposta contendo mensagem de sucesso ou erro.
+   * @returns {Promise<void>} Retorna status 200 em caso de sucesso ou erros de validação/servidor.
+   */
   async createUser(req: Request, res: Response): Promise<void> {
     const { username, email, password, phoneNumber, role } = req.body;
 
@@ -35,7 +43,7 @@ export class UserController {
 
     try {
       const hashP = await bcrypt.hash(String(password), 10);
-      const user = await userRepository.create({ username, email, password: hashP, phoneNumber, role });
+      await userRepository.create({ username, email, password: hashP, phoneNumber, role });
       res.status(200).json({ message: 'Usuário criado com sucesso! '});
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
@@ -43,6 +51,14 @@ export class UserController {
     }
   }
 
+  /**
+   * Realiza login de um usuário já cadastrado.
+   *
+   * @route POST /login
+   * @param {Request} req - Requisição contendo email e password.
+   * @param {Response} res - Resposta contendo token JWT, id e role do usuário.
+   * @returns {Promise<void>} Retorna status 200 em caso de sucesso ou erros de autenticação/servidor.
+   */
   async signUser(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
@@ -80,10 +96,17 @@ export class UserController {
     }
   }
 
+  /**
+   * Lista todos os usuários cadastrados.
+   *
+   * @route GET /users
+   * @param {Request} req - Requisição HTTP.
+   * @param {Response} res - Resposta contendo lista de usuários (sem senha).
+   * @returns {Promise<void>} Retorna status 200 com lista de usuários ou erro 500.
+   */
   async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
       const users = await userRepository.findAll();
-      // Remove a senha dos objetos de usuário antes de enviar a resposta
       const usersWithoutPassword = users.map(user => {
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
@@ -95,12 +118,19 @@ export class UserController {
     }
   }
 
+  /**
+   * Busca um usuário específico pelo ID.
+   *
+   * @route GET /users/:id
+   * @param {Request} req - Requisição contendo o parâmetro de rota "id".
+   * @param {Response} res - Resposta contendo dados do usuário (sem senha).
+   * @returns {Promise<void>} Retorna status 200 em caso de sucesso, 400 para ID inválido ou 404 se não encontrado.
+   */
   async getUserById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const userId = parseInt(id, 10);
 
-      // Valida se o ID é um número válido
       if (isNaN(userId)) {
         res.status(400).json({ message: 'O ID do usuário deve ser um número válido' });
         return;
@@ -113,14 +143,11 @@ export class UserController {
         return;
       }
 
-      // Remove a senha antes de enviar a resposta
       const { password, ...userWithoutPassword } = user;
-
       res.status(200).json(userWithoutPassword);
     } catch (error) {
       console.error('Erro ao buscar usuário por ID:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   }
-  
 }
