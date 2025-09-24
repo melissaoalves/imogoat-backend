@@ -80,81 +80,45 @@ export class UserController {
     }
   }
 
-  async sendResetEmail(req: Request, res: Response): Promise<void> {
+  async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
-      const { email } = req.body;
-      if (!email) {
-        console.log(email);
-        res.status(400).json({ message: "O campo 'email' é obrigatório" });
-      }
-
-      const user = await userRepository.findByEmail(email);
-      if (!user) {
-        res.status(404).json({ message: 'Usuário não encontrado' });
-      }
-      const token = jwt.sign({ id: user?.id }, jwt_pass, { expiresIn: '1h' });
-
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: email_user,
-          pass: email_pass
-        }
+      const users = await userRepository.findAll();
+      // Remove a senha dos objetos de usuário antes de enviar a resposta
+      const usersWithoutPassword = users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
       });
-
-      const info = await transporter.sendMail({
-        from: '"ImoGoat" <imogoat23@gmail.com>',
-        to: email,
-        subject: 'Redefinição de Senha - ImoGoat',
-        text: `Olá,\n\nRecebemos sua solicitação para redefinir a senha. Copie o código abaixo e cole no aplicativo para continuar:\n\n${token}\n\nSe você não solicitou a redefinição, ignore este e-mail.\n\nAtenciosamente,\nEquipe ImoGoat`
-      }, (error, info) => {
-        if (error) {
-          console.log(error)
-          res.status(500).json({ message: 'Erro ao enviar email'});
-        } else {
-          res.status(200).json({ token })
-        }
-      });
-    } catch(error) {
-      console.error('Erro ao enviar email de redefinição:', error);
+      res.status(200).json(usersWithoutPassword);
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   }
 
-  async resetPassword(req: Request, res: Response): Promise<void> {
+  async getUserById(req: Request, res: Response): Promise<void> {
     try {
-      const { token, novaSenha } = req.body;
-      if (!token || !novaSenha) {
-        res.status(400).json({ message: "Os campos 'token' e 'novaSenha' são obrigatórios" });
+      const { id } = req.params;
+      const userId = parseInt(id, 10);
+
+      // Valida se o ID é um número válido
+      if (isNaN(userId)) {
+        res.status(400).json({ message: 'O ID do usuário deve ser um número válido' });
         return;
       }
-  
-      let decodedToken: any;
-      try {
-        decodedToken = jwt.verify(token, jwt_pass);
-      } catch (err) {
-        res.status(400).json({ message: 'Token inválido' });
-        return;
-      }
-  
-      if (!decodedToken || !decodedToken.id) {
-        res.status(400).json({ message: 'Token inválido' });
-        return;
-      }
-  
-      const user = await userRepository.findById(decodedToken.id);
+
+      const user = await userRepository.findById(userId);
+
       if (!user) {
         res.status(404).json({ message: 'Usuário não encontrado' });
         return;
       }
-  
-      const hashNewPassword = await bcrypt.hash(novaSenha, 10);
-      user.password = hashNewPassword;
-      await userRepository.update(user.id, user);
-      res.status(200).json({ message: 'Senha redefinida com sucesso' });
-  
+
+      // Remove a senha antes de enviar a resposta
+      const { password, ...userWithoutPassword } = user;
+
+      res.status(200).json(userWithoutPassword);
     } catch (error) {
-      console.error('Erro ao resetar senha:', error);
+      console.error('Erro ao buscar usuário por ID:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   }
