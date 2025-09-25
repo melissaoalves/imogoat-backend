@@ -43,7 +43,7 @@ export class UserController {
 
     try {
       const hashP = await bcrypt.hash(String(password), 10);
-      await userRepository.create({ username, email, password: hashP, phoneNumber, role });
+      const user = await userRepository.create({ username, email, password: hashP, phoneNumber, role });
       res.status(200).json({ message: 'Usuário criado com sucesso! '});
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
@@ -155,10 +155,29 @@ export class UserController {
     try {
       const { id } = req.params;
       const { username, email, password, phoneNumber, role } = req.body;
-      const user = await userRepository.findById(Number(id));
+      const userId = Number(id);
+
+      if (isNaN(userId)) {
+        res.status(400).json({ message: 'O ID do usuário deve ser um número válido.' });
+        return;
+      }
+
+      const user = await userRepository.findById(userId);
+
       if (user) {
-        await userRepository.update(Number(id), { username, email, password, phoneNumber, role });
-        res.status(204).json({ message: 'Usuário atualizado com sucesso' });
+        const updatePayload = {
+          username,
+          email,
+          phoneNumber,
+          role,
+          password: password ? await bcrypt.hash(password, 10) : undefined
+        };
+        
+        const updatedUser = await userRepository.update(userId, updatePayload);
+        
+        const { password: _, ...userWithoutPassword } = updatedUser!;
+
+        res.status(200).json(userWithoutPassword);
       } else {
         res.status(404).json({ message: 'Usuário não encontrado' });
       }
@@ -174,7 +193,7 @@ export class UserController {
       const user = await userRepository.findById(Number(id));
       if (user) {
         await userRepository.delete(Number(id));
-        res.status(204).json({ message: 'Usuário deletado com sucesso' });
+        res.status(200).json({ message: 'Usuário deletado com sucesso' });
       } else {
         res.status(404).json({ message: 'Usuário não encontrado' });
       }
