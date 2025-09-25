@@ -151,6 +151,15 @@ export class UserController {
     }
   }
 
+
+  /**
+ * Atualiza os dados de um usuário existente.
+ *
+ * @route PUT /users/:id
+ * @param {Request} req - Requisição contendo o parâmetro de rota "id" e os novos dados do usuário (username, email, password, number, role).
+ * @param {Response} res - Resposta contendo mensagem de sucesso ou erro.
+ * @returns {Promise<void>} Retorna status 204 em caso de sucesso, 404 se o usuário não existir ou 500 em caso de erro interno.
+ */
   async updateUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -187,6 +196,14 @@ export class UserController {
     }
   }
 
+  /**
+ * Deleta um usuário do sistema.
+ *
+ * @route DELETE /users/:id
+ * @param {Request} req - Requisição contendo o parâmetro de rota "id".
+ * @param {Response} res - Resposta contendo mensagem de sucesso ou erro.
+ * @returns {Promise<void>} Retorna status 204 em caso de sucesso, 404 se o usuário não existir ou 500 em caso de erro interno.
+ */
   async deleteUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
