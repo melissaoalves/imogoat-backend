@@ -150,4 +150,37 @@ export class UserController {
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   }
+
+  async updateUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { username, email, password, phoneNumber, role } = req.body;
+      const user = await userRepository.findById(Number(id));
+      if (user) {
+        await userRepository.update(Number(id), { username, email, password, phoneNumber, role });
+        res.status(204).json({ message: 'Usuário atualizado com sucesso' });
+      } else {
+        res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+
+  async deleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const user = await userRepository.findById(Number(id));
+      if (user) {
+        await userRepository.delete(Number(id));
+        res.status(204).json({ message: 'Usuário deletado com sucesso' });
+      } else {
+        res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
 }
