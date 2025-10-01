@@ -2,9 +2,22 @@ import { Router } from 'express';
 
 import { UserController } from '../src/controllers/UserControllers';
 import { ImmobileController } from '../src/controllers/ImmobileControllers';
+import { ImageController } from '../src/controllers/ImageControllers';
 import { authMiddleware } from '../src/middlewares/authMiddleware';
 
 const routes = Router();
+
+const multer = require('multer');
+
+const uploadImovel = require('./services/firebase.js');
+
+const Multer = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 1024 * 1024 * 10,
+    files: 5
+  }
+});
 
 routes.post('/create-user', new UserController().createUser);
 routes.post('/login', new UserController().signUser);
@@ -18,5 +31,10 @@ routes.get('/immobile', new ImmobileController().getAllImmobiles);
 routes.post('/create-immobile', authMiddleware, new ImmobileController().createImmobile);
 routes.put('/alter-immobile/:id', authMiddleware, new ImmobileController().updateImmobile);
 routes.delete('/delete-immobile/:id', authMiddleware, new ImmobileController().deleteImmobile);
+
+// Rotas de imagens
+routes.post('/create-image', authMiddleware, Multer.array('img', 5), uploadImovel, new ImageController().createImage);
+routes.get('/image', new ImageController().getAllImages);
+routes.get('/image/:id', new ImageController().getImageById);
 
 export default routes;
