@@ -107,11 +107,7 @@ export class UserController {
   async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
       const users = await userRepository.findAll();
-      const usersWithoutPassword = users.map(user => {
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
-      });
-      res.status(200).json(usersWithoutPassword);
+      res.json(users);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
@@ -129,24 +125,14 @@ export class UserController {
   async getUserById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const userId = parseInt(id, 10);
-
-      if (isNaN(userId)) {
-        res.status(400).json({ message: 'O ID do usuário deve ser um número válido' });
-        return;
-      }
-
-      const user = await userRepository.findById(userId);
-
-      if (!user) {
+      const user = await userRepository.findById(Number(id));
+      if (user) {
+        res.json(user);
+      } else {
         res.status(404).json({ message: 'Usuário não encontrado' });
-        return;
       }
-
-      const { password, ...userWithoutPassword } = user;
-      res.status(200).json(userWithoutPassword);
     } catch (error) {
-      console.error('Erro ao buscar usuário por ID:', error);
+      console.error('Erro ao buscar usuário:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   }
@@ -164,29 +150,10 @@ export class UserController {
     try {
       const { id } = req.params;
       const { username, email, password, phoneNumber, role } = req.body;
-      const userId = Number(id);
-
-      if (isNaN(userId)) {
-        res.status(400).json({ message: 'O ID do usuário deve ser um número válido.' });
-        return;
-      }
-
-      const user = await userRepository.findById(userId);
-
+      const user = await userRepository.findById(Number(id));
       if (user) {
-        const updatePayload = {
-          username,
-          email,
-          phoneNumber,
-          role,
-          password: password ? await bcrypt.hash(password, 10) : undefined
-        };
-        
-        const updatedUser = await userRepository.update(userId, updatePayload);
-        
-        const { password: _, ...userWithoutPassword } = updatedUser!;
-
-        res.status(200).json(userWithoutPassword);
+        await userRepository.update(Number(id), { username, email, password, phoneNumber, role });
+        res.status(204).json({ message: 'Usuário atualizado com sucesso' });
       } else {
         res.status(404).json({ message: 'Usuário não encontrado' });
       }
@@ -210,7 +177,7 @@ export class UserController {
       const user = await userRepository.findById(Number(id));
       if (user) {
         await userRepository.delete(Number(id));
-        res.status(200).json({ message: 'Usuário deletado com sucesso' });
+        res.status(204).json({ message: 'Usuário deletado com sucesso' });
       } else {
         res.status(404).json({ message: 'Usuário não encontrado' });
       }
