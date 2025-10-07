@@ -24,16 +24,15 @@ const uploadImovel = async (req, res, next) => {
         metadata: {
           contentType: image.mimetype,
         },
-        resumable: true,  // Usando upload resumível para lidar melhor com falhas
+        resumable: true,
       });
 
       await new Promise((resolve, reject) => {
-        let retries = 3;  // Número de tentativas
-        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));  // Função de delay
+        let retries = 3;
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
         const uploadWithRetry = async () => {
           try {
-            // Tentativa de upload
             stream.on("error", (e) => {
               console.error("Erro no upload do arquivo:", e.message, e.stack);
               reject(e);
@@ -57,8 +56,8 @@ const uploadImovel = async (req, res, next) => {
             console.log("Erro no upload, tentando novamente...");
             if (retries > 0) {
               retries--;
-              await delay(3000);  // Aumento o delay para 3 segundos
-              uploadWithRetry();  // Nova tentativa
+              await delay(3000);
+              uploadWithRetry();
             } else {
               reject(e);
             }
