@@ -5,6 +5,16 @@ import prisma from '../../prisma/prismaClient';
 const favoriteRepository = new FavoriteRepository();
 
 export class FavoriteController {
+  /**
+   * @method addFavorite
+   * @description Adiciona um imóvel à lista de favoritos de um usuário.
+   * Verifica se o imóvel e o usuário são válidos e se o imóvel já está favoritado.
+   *
+   * @param {Request} req - O objeto de requisição do Express. Espera userId e immobileId no corpo.
+   * @param {Response} res - O objeto de resposta do Express.
+   * @returns {Promise<void>} Retorna status 200 (Sucesso), 400 (Bad Request), 409 (Conflito) ou 500 (Erro Interno).
+   * @async
+   */
   async addFavorite(req: Request, res: Response): Promise<void> {
     const { userId, immobileId } = req.body;
   
@@ -13,19 +23,9 @@ export class FavoriteController {
       return;
     }
   
-    // if (req.user.role !== 'user') {
-    //   res.status(403).json({ message: 'Você não tem permissão para favoritar um imóvel!' });
-    //   return;
-    // }
-  
     const userP = await prisma.user.findUnique({
       where: { id: userId }
     });
-  
-    // if (!userP || userP.role !== 'user') {
-    //   res.status(400).json({ message: 'Usuário inválido' });
-    //   return;
-    // }
   
     const immobile = await prisma.immobile.findUnique({
       where: { id: immobileId }
@@ -58,7 +58,16 @@ export class FavoriteController {
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   } 
-
+/**
+   * @method deleteFavorite
+   * @description Remove um favorito específico usando o ID do registro de Favorito.
+   * Implementa a verificação de permissão: apenas o dono do favorito pode deletá-lo.
+   *
+   * @param {Request} req - O objeto de requisição do Express. Espera o ID do favorito em req.params.
+   * @param {Response} res - O objeto de resposta do Express.
+   * @returns {Promise<void>} Retorna status 200 (Sucesso), 404 (Não Encontrado), 403 (Proibido) ou 500 (Erro Interno).
+   * @async
+   */
   async deleteFavorite(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -82,41 +91,7 @@ export class FavoriteController {
     }
   }
 
-  // async deleteFavorite(req: Request, res: Response): Promise<void> {
-  //   const { userId, immobileId } = req.body;
-  //   if (!userId || !immobileId) {
-  //     res.status(400).json({ message: "Os campos 'userId' e 'immobiledId' são obrigatórios!" });
-  //     return;
-  //   }
-
-  //   if (req.user.role !== 'user' || req.user.id !== userId) {
-  //     res.status(403).json({ message: 'Você não tem permissão para desfavoritar um imóvel!' });
-  //     return;
-  //   }
-
-  //   const favorite = await prisma.favorite.findUnique({
-  //     where: {
-  //       userId_immobileId: {
-  //         userId: Number(userId),
-  //         immobileId: Number(immobileId),
-  //       },
-  //     },
-  //   });
-
-  //   if (!favorite) {
-  //     res.status(404).json({ message: 'Favorito não encontrado' });
-  //     return;
-  //   }
-
-  //   try {
-  //     await favoriteRepository.removeFavorite(userId, immobileId);
-  //     res.status(200).json({ message: 'Imóvel desfavoritado com sucesso' });
-  //   } catch (error) {
-  //     console.error('Erro ao desfavoritar imóvel:', error);
-  //     res.status(500).json({ message: 'Erro interno do servidor' });
-  //   }
-  // }
-
+ 
   async getFavorites(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
