@@ -4,6 +4,7 @@ import { UserController } from '../src/controllers/UserControllers';
 import { ImmobileController } from '../src/controllers/ImmobileControllers';
 import { ImageController } from '../src/controllers/ImageControllers';
 import { authMiddleware } from '../src/middlewares/authMiddleware';
+import { FavoriteController } from './controllers/FavoriteControllers';
 
 const routes = Router();
 
@@ -35,5 +36,9 @@ routes.delete('/delete-immobile/:id', authMiddleware, new ImmobileController().d
 routes.post('/create-image', authMiddleware, Multer.array('url', 5), uploadImovel, new ImageController().createImage);
 routes.get('/image', new ImageController().getAllImages);
 routes.get('/image/:id', new ImageController().getImageById);
+
+routes.post('/create-favorites', authMiddleware, new FavoriteController().addFavorite);
+routes.delete('/delete-favorites/:id', authMiddleware, new FavoriteController().deleteFavorite);
+routes.get('/favorites/:userId', authMiddleware, new FavoriteController().getFavorites);
 
 export default routes;
