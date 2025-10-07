@@ -32,7 +32,6 @@ routes.post('/create-immobile', authMiddleware, new ImmobileController().createI
 routes.put('/alter-immobile/:id', authMiddleware, new ImmobileController().updateImmobile);
 routes.delete('/delete-immobile/:id', authMiddleware, new ImmobileController().deleteImmobile);
 
-// Rotas de imagens
 routes.post('/create-image', authMiddleware, Multer.array('url', 5), uploadImovel, new ImageController().createImage);
 routes.get('/image', new ImageController().getAllImages);
 routes.get('/image/:id', new ImageController().getImageById);

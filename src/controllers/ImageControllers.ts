@@ -11,6 +11,13 @@ interface UploadedFile extends Express.Multer.File {
 }
 
 export class ImageController {
+  /**
+   * Recupera todas as imagens cadastradas no banco de dados.
+   * 
+   * @param {Request} req - Objeto da requisição HTTP.
+   * @param {Response} res - Objeto da resposta HTTP.
+   * @returns {Promise<void>} Retorna uma lista de imagens ou um erro interno do servidor.
+  */
   async getAllImages(req: Request, res: Response): Promise<void> {
     try {
       const images = await imagemRepository.findAll();
@@ -21,6 +28,17 @@ export class ImageController {
     }
   }
 
+  /**
+   * Recupera uma imagem específica com base no ID fornecido.
+   * 
+   * @param {Request} req - Objeto da requisição contendo o parâmetro `id` da imagem.
+   * @param {Response} res - Objeto da resposta HTTP.
+   * @returns {Promise<void>} Retorna a imagem encontrada ou uma mensagem de erro.
+   * 
+   * @example
+   * // Exemplo de rota
+   * GET /images/1
+  */
   async getImageById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -38,6 +56,22 @@ export class ImageController {
 
   }
 
+  /**
+   * Cria uma ou mais imagens associadas a um imóvel.
+   * 
+   * @param {Request} req - Objeto da requisição contendo o `immobileId` e os arquivos de imagem enviados.
+   * @param {Response} res - Objeto da resposta HTTP.
+   * @returns {Promise<void>} Retorna as imagens criadas ou uma mensagem de erro.
+   * 
+   * @throws {Error} Caso o upload ou a criação da imagem falhem.
+   * 
+   * @example
+   * // Exemplo de corpo da requisição
+   * {
+   *   "immobileId": 3,
+   *   "files": [arquivo1, arquivo2]
+   * }
+  */
   async createImage(req: Request, res: Response): Promise<void> {
     const { immobileId } = req.body;
     const files = (req.files && Array.isArray(req.files)) ? req.files as UploadedFile[] : [];
