@@ -58,6 +58,7 @@ export class FavoriteController {
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   } 
+  
 /**
    * @method deleteFavorite
    * @description Remove um favorito específico usando o ID do registro de Favorito.
