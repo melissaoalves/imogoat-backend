@@ -5,6 +5,7 @@ import { ImmobileController } from '../src/controllers/ImmobileControllers';
 import { ImageController } from '../src/controllers/ImageControllers';
 import { authMiddleware } from '../src/middlewares/authMiddleware';
 import { FavoriteController } from './controllers/FavoriteControllers';
+import { FeedbackController } from '../src/controllers/FeedbackControllers';
 
 const routes = Router();
 
@@ -40,5 +41,11 @@ routes.get('/image/:id', new ImageController().getImageById);
 routes.post('/create-favorites', authMiddleware, new FavoriteController().addFavorite);
 routes.delete('/delete-favorites/:id', authMiddleware, new FavoriteController().deleteFavorite);
 routes.get('/favorites/:userId', authMiddleware, new FavoriteController().getFavorites);
+
+routes.get('/feedback', new FeedbackController().getAllFeedbacks);
+routes.get('/feedback/:id', new FeedbackController().getFeedbackById);
+routes.post('/create-feedback', authMiddleware, new FeedbackController().createFeedback);
+routes.put('/alter-feedback/:id', authMiddleware, new FeedbackController().updateFeedback);
+routes.delete('delete-feedback/:id', authMiddleware, new FeedbackController().deleteFeedback);
 
 export default routes;
