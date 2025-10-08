@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   database:
@@ -9,7 +9,7 @@ services:
       - 5432:5432
     environment:
       - POSTGRES_USER=imogoat
-      - POSTGRES_PASSWORD=imo,123,goat
+      - POSTGRES_PASSWORD=imo123goat
       - POSTGRES_DB=imogoat_api
     volumes:
       - pgdata:/data/postgres
