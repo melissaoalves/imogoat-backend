@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import { FavoriteRepository } from '../repositories/FavoriteRepository';
-import prisma from '../../prisma/prismaClient';
+import { Request, Response } from "express";
+import { FavoriteRepository } from "../repositories/FavoriteRepository";
+import prisma from "../../prisma/prismaClient";
 
 const favoriteRepository = new FavoriteRepository();
 
@@ -17,25 +17,29 @@ export class FavoriteController {
    */
   async addFavorite(req: Request, res: Response): Promise<void> {
     const { userId, immobileId } = req.body;
-  
+
     if (!userId || !immobileId) {
-      res.status(400).json({ message: "Os campos 'userId' e 'immobileId' são obrigatórios!" });
+      res
+        .status(400)
+        .json({
+          message: "Os campos 'userId' e 'immobileId' são obrigatórios!",
+        });
       return;
     }
-  
+
     const userP = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
-  
+
     const immobile = await prisma.immobile.findUnique({
-      where: { id: immobileId }
+      where: { id: immobileId },
     });
-  
+
     if (!immobile) {
-      res.status(400).json({ message: 'Imóvel inválido' });
+      res.status(400).json({ message: "Imóvel inválido" });
       return;
     }
-  
+
     try {
       const verificaFavorite = await prisma.favorite.findUnique({
         where: {
@@ -45,20 +49,21 @@ export class FavoriteController {
           },
         },
       });
-  
+
       if (verificaFavorite) {
-        res.status(409).json({ message: 'Imóvel já foi favoritado' });
+        res.status(409).json({ message: "Imóvel já foi favoritado" });
         return;
       }
-  
+
       await favoriteRepository.addFavorite(userId, immobileId);
-      res.status(200).json({ message: 'Imóvel favoritado com sucesso' });
+      res.status(200).json({ message: "Imóvel favoritado com sucesso" });
     } catch (error) {
-      console.error('Erro ao favoritar imóvel:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
+      console.error("Erro ao favoritar imóvel:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
-  } 
-/**
+  }
+
+  /**
    * @method deleteFavorite
    * @description Remove um favorito específico usando o ID do registro de Favorito.
    * Implementa a verificação de permissão: apenas o dono do favorito pode deletá-lo.
@@ -75,23 +80,36 @@ export class FavoriteController {
       const favorite = await favoriteRepository.findById(Number(id));
 
       if (!favorite) {
-        res.status(404).json({ message: 'Favorito não encontrado'});
+        res.status(404).json({ message: "Favorito não encontrado" });
         return;
       }
 
       if (req.user.id !== favorite?.userId) {
-        res.status(403).json({ message: 'Você não tem permissão para deletar esse feedback' });
+        res
+          .status(403)
+          .json({
+            message: "Você não tem permissão para deletar esse feedback",
+          });
         return;
       }
       await favoriteRepository.delete(Number(id));
-      res.status(200).json({ message: 'Favorito delatado com sucesso!'});
+      res.status(200).json({ message: "Favorito delatado com sucesso!" });
     } catch (error) {
-      console.error('Erro ao deletar favorito:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
+      console.error("Erro ao deletar favorito:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   }
 
- 
+  /**
+   * @method getFavorites
+   * @description Busca todos os imóveis favoritados por um usuário específico.
+   * Retorna a lista completa de favoritos com informações dos imóveis relacionados.
+   *
+   * @param {Request} req - O objeto de requisição do Express. Espera o userId nos parâmetros da URL.
+   * @param {Response} res - O objeto de resposta do Express.
+   * @returns {Promise<void>} Retorna status 200 com a lista de favoritos, 404 se não encontrar favoritos ou 500 em caso de erro interno.
+   * @async
+   */
   async getFavorites(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
@@ -99,14 +117,14 @@ export class FavoriteController {
       const favorites = await favoriteRepository.getFavorites(Number(userId));
 
       if (!favorites || favorites.length === 0) {
-        res.status(404).json({ message: 'Nenhum favorito encontrado' });
+        res.status(404).json({ message: "Nenhum favorito encontrado" });
         return;
       }
 
       res.status(200).json(favorites);
     } catch (error) {
-      console.error('Erro ao buscar imóveis favoritados:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
+      console.error("Erro ao buscar imóveis favoritados:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
   }
 }
