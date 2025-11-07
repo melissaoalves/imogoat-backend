@@ -40,7 +40,7 @@ model Immobile {
   images            Image[]
   feedbacks         Feedback[]
   favorites         Favorite[]
-  owner             User       @relation(fields: [ownerId], references: [id])
+  owner             User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 }
 
 model Feedback {
@@ -50,7 +50,7 @@ model Feedback {
   date        DateTime  @default(now())
   userId      Int
   immobileId  Int
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   immobile    Immobile  @relation(fields: [immobileId], references: [id], onDelete: Cascade)
 }
 
@@ -65,7 +65,7 @@ model Favorite {
   id          Int       @id @default(autoincrement())
   userId      Int
   immobileId  Int
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   immobile    Immobile  @relation(fields: [immobileId], references: [id], onDelete: Cascade)
   
   @@unique([userId, immobileId])
