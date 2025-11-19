@@ -25,12 +25,9 @@ export class UserController {
     const { username, email, password, phoneNumber, role } = req.body;
 
     if (!username || !email || !password) {
-      res
-        .status(400)
-        .json({
-          message:
-            "Os campos 'username', 'email' e 'password' são obrigatórios",
-        });
+      res.status(400).json({
+        message: "Os campos 'username', 'email' e 'password' são obrigatórios",
+      });
       return;
     }
 
@@ -41,11 +38,9 @@ export class UserController {
     }
 
     if (role !== "admin" && role !== "user" && role !== "owner") {
-      res
-        .status(400)
-        .json({
-          message: "O campo 'role' deve ser 'admin', 'user' ou 'owner'",
-        });
+      res.status(400).json({
+        message: "O campo 'role' deve ser 'admin', 'user' ou 'owner'",
+      });
       return;
     }
 
@@ -245,13 +240,30 @@ export class UserController {
 
       await userRepository.setPasswordResetCode(email, resetCode, expiresAt);
 
-      await emailService.sendPasswordResetEmail(
-        email,
-        user.username,
-        resetCode
-      );
+      try {
+        await emailService.sendPasswordResetEmail(
+          email,
+          user.username,
+          resetCode
+        );
+        res.json({
+          message: "Código de recuperação enviado para o email",
+          emailSent: true,
+        });
+      } catch (emailError) {
+        console.error("Falha no envio de email:", emailError);
 
-      res.json({ message: "Código de recuperação enviado para o email" });
+        if (process.env.NODE_ENV === "production") {
+          res.json({
+            message:
+              "Código de recuperação gerado. Verifique seu email ou use o código diretamente.",
+            emailSent: false,
+            code: resetCode,
+          });
+        } else {
+          throw emailError;
+        }
+      }
     } catch (error) {
       console.error("Erro ao solicitar recuperação de senha:", error);
       res.status(500).json({ message: "Erro interno do servidor" });
@@ -271,11 +283,9 @@ export class UserController {
       const { resetCode, newPassword } = req.body;
 
       if (!resetCode || !newPassword) {
-        res
-          .status(400)
-          .json({
-            message: "Código de recuperação e nova senha são obrigatórios",
-          });
+        res.status(400).json({
+          message: "Código de recuperação e nova senha são obrigatórios",
+        });
         return;
       }
 
