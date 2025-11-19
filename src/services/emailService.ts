@@ -9,11 +9,19 @@ export class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
         user: email_user,
         pass: email_pass,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
+      connectionTimeout: 60000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000,
     });
   }
 
@@ -51,9 +59,25 @@ export class EmailService {
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      // Timeout personalizado de 15 segundos para evitar travamento
+      await Promise.race([
+        this.transporter.sendMail(mailOptions),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Email timeout")), 15000)
+        ),
+      ]);
+      console.log(`Email de recuperação enviado para: ${email}`);
     } catch (error) {
       console.error("Erro ao enviar email:", error);
+
+      // Em produção, vamos logar o erro mas não falhar a requisição
+      if (process.env.NODE_ENV === "production") {
+        console.warn(
+          `Falha no envio de email para ${email}, mas código foi salvo no banco`
+        );
+        return; // Não lança erro em produção
+      }
+
       throw new Error("Falha ao enviar email de recuperação");
     }
   }
