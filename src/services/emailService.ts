@@ -37,7 +37,7 @@ export class EmailService {
     email: string,
     username: string,
     resetCode: string
-  ): Promise<{success: boolean, error?: string}> {
+  ): Promise<{ success: boolean; error?: string }> {
     const mailOptions = {
       from: email_user,
       to: email,
