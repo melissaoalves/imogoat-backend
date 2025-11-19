@@ -2,16 +2,15 @@ import bcrypt from 'bcryptjs';
 import 'dotenv/config';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
 
 import { UserRepository } from '../repositories/UserRepository';
+import { EmailService } from '../services/emailService';
 import { error, info } from 'console';
 
 const jwt_pass = process.env.JWT_PASS as string;
-const email_pass = process.env.EMAIL_PASS as string;
-const email_user = process.env.EMAIL_USER as string;
 
 const userRepository = new UserRepository();
+const emailService = new EmailService();
 
 export class UserController {
   /**
@@ -44,6 +43,11 @@ export class UserController {
     try {
       const hashP = await bcrypt.hash(String(password), 10);
       const user = await userRepository.create({ username, email, password: hashP, phoneNumber, role });
+      
+      emailService.sendWelcomeEmail(email, username).catch(error => {
+        console.error('Erro ao enviar email de boas-vindas:', error);
+      });
+
       res.status(200).json({ message: 'Usuário criado com sucesso! '});
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
@@ -183,6 +187,83 @@ export class UserController {
       }
     } catch (error) {
       console.error('Erro ao deletar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+
+  /**
+   * Solicita recuperação de senha enviando código por email.
+   *
+   * @route POST /forgot-password
+   * @param {Request} req - Requisição contendo o campo email.
+   * @param {Response} res - Resposta contendo mensagem de sucesso ou erro.
+   * @returns {Promise<void>} Retorna status 200 em caso de sucesso ou erros de validação/servidor.
+   */
+  async requestPasswordReset(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({ message: 'Email é obrigatório' });
+        return;
+      }
+
+      const user = await userRepository.findByEmail(String(email));
+      if (!user) {
+        res.status(404).json({ message: 'Usuário não encontrado' });
+        return;
+      }
+
+      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+      await userRepository.setPasswordResetCode(email, resetCode, expiresAt);
+
+      await emailService.sendPasswordResetEmail(email, user.username, resetCode);
+
+      res.json({ message: 'Código de recuperação enviado para o email' });
+    } catch (error) {
+      console.error('Erro ao solicitar recuperação de senha:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+
+  /**
+   * Redefine a senha usando o código enviado por email.
+   *
+   * @route POST /reset-password
+   * @param {Request} req - Requisição contendo resetCode e newPassword.
+   * @param {Response} res - Resposta contendo mensagem de sucesso ou erro.
+   * @returns {Promise<void>} Retorna status 200 em caso de sucesso ou erros de validação/servidor.
+   */
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { resetCode, newPassword } = req.body;
+
+      if (!resetCode || !newPassword) {
+        res.status(400).json({ message: 'Código de recuperação e nova senha são obrigatórios' });
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        res.status(400).json({ message: 'A nova senha deve ter pelo menos 6 caracteres' });
+        return;
+      }
+
+      const user = await userRepository.findByResetCode(String(resetCode));
+      if (!user) {
+        res.status(400).json({ message: 'Código de recuperação inválido ou expirado' });
+        return;
+      }
+
+      const hashedPassword = await bcrypt.hash(String(newPassword), 10);
+
+      await userRepository.updatePasswordAndClearResetCode(user.id, hashedPassword);
+
+      res.json({ message: 'Senha redefinida com sucesso' });
+    } catch (error) {
+      console.error('Erro ao redefinir senha:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   }
