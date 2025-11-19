@@ -31,13 +31,13 @@ export class EmailService {
    * @param {string} email - Email do destinatário.
    * @param {string} username - Nome do usuário.
    * @param {string} resetCode - Código de recuperação de 6 dígitos.
-   * @returns {Promise<void>} Retorna void em caso de sucesso ou lança erro.
+   * @returns {Promise<{success: boolean, error?: string}>} Retorna status do envio.
    */
   async sendPasswordResetEmail(
     email: string,
     username: string,
     resetCode: string
-  ): Promise<void> {
+  ): Promise<{success: boolean, error?: string}> {
     const mailOptions = {
       from: email_user,
       to: email,
@@ -59,7 +59,6 @@ export class EmailService {
     };
 
     try {
-      // Timeout personalizado de 15 segundos para evitar travamento
       await Promise.race([
         this.transporter.sendMail(mailOptions),
         new Promise((_, reject) =>
@@ -67,15 +66,15 @@ export class EmailService {
         ),
       ]);
       console.log(`Email de recuperação enviado para: ${email}`);
+      return { success: true };
     } catch (error) {
       console.error("Erro ao enviar email:", error);
 
-      // Em produção, vamos logar o erro mas não falhar a requisição
       if (process.env.NODE_ENV === "production") {
         console.warn(
           `Falha no envio de email para ${email}, mas código foi salvo no banco`
         );
-        return; // Não lança erro em produção
+        return { success: false, error: (error as Error).message };
       }
 
       throw new Error("Falha ao enviar email de recuperação");

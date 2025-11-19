@@ -240,29 +240,24 @@ export class UserController {
 
       await userRepository.setPasswordResetCode(email, resetCode, expiresAt);
 
-      try {
-        await emailService.sendPasswordResetEmail(
-          email,
-          user.username,
-          resetCode
-        );
+      const emailResult = await emailService.sendPasswordResetEmail(
+        email,
+        user.username,
+        resetCode
+      );
+
+      if (emailResult.success) {
         res.json({
           message: "Código de recuperação enviado para o email",
           emailSent: true,
         });
-      } catch (emailError) {
-        console.error("Falha no envio de email:", emailError);
-
-        if (process.env.NODE_ENV === "production") {
-          res.json({
-            message:
-              "Código de recuperação gerado. Verifique seu email ou use o código diretamente.",
-            emailSent: false,
-            code: resetCode,
-          });
-        } else {
-          throw emailError;
-        }
+      } else {
+        res.json({
+          message:
+            "Código de recuperação gerado. Verifique seu email ou use o código diretamente se disponível.",
+          emailSent: false,
+          ...(process.env.NODE_ENV === "production" ? { code: resetCode } : {}),
+        });
       }
     } catch (error) {
       console.error("Erro ao solicitar recuperação de senha:", error);
