@@ -1,4 +1,4 @@
-import { PrismaClient, User, Prisma } from '@prisma/client';
+import { PrismaClient, User, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -20,7 +20,7 @@ export class UserRepository {
    */
   async findById(id: number): Promise<User | null> {
     return prisma.user.findUnique({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -32,7 +32,7 @@ export class UserRepository {
    */
   async findByEmail(email: string): Promise<User | null> {
     return prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
   }
 
@@ -49,8 +49,8 @@ export class UserRepository {
         email: data.email,
         password: data.password,
         phoneNumber: data.phoneNumber,
-        role: data.role
-      }
+        role: data.role,
+      },
     });
   }
 
@@ -64,7 +64,7 @@ export class UserRepository {
   async update(id: number, data: Prisma.UserUpdateInput): Promise<User | null> {
     return prisma.user.update({
       where: { id },
-      data
+      data,
     });
   }
 
@@ -76,7 +76,67 @@ export class UserRepository {
    */
   async delete(id: number): Promise<void> {
     await prisma.user.delete({
-      where: { id }
+      where: { id },
+    });
+  }
+
+  /**
+   * Armazena o código de recuperação de senha e sua data de expiração para um usuário.
+   *
+   * @param {string} email - Email do usuário.
+   * @param {string} resetCode - Código de recuperação de 6 dígitos.
+   * @param {Date} expiresAt - Data de expiração do código.
+   * @returns {Promise<User | null>} Usuário atualizado ou null se não existir.
+   */
+  async setPasswordResetCode(
+    email: string,
+    resetCode: string,
+    expiresAt: Date
+  ): Promise<User | null> {
+    return prisma.user.update({
+      where: { email },
+      data: {
+        resetPasswordCode: resetCode,
+        resetPasswordCodeExpiresAt: expiresAt,
+      },
+    });
+  }
+
+  /**
+   * Busca um usuário pelo código de recuperação de senha.
+   *
+   * @param {string} resetCode - Código de recuperação.
+   * @returns {Promise<User | null>} Usuário encontrado ou null se não existir.
+   */
+  async findByResetCode(resetCode: string): Promise<User | null> {
+    return prisma.user.findFirst({
+      where: {
+        resetPasswordCode: resetCode,
+        resetPasswordCodeExpiresAt: {
+          gte: new Date(),
+        },
+      },
+    });
+  }
+
+  /**
+   * Atualiza a senha do usuário e remove o código de recuperação.
+   *
+   * @param {number} id - ID do usuário.
+   * @param {string} newPassword - Nova senha já criptografada.
+   * @returns {Promise<User | null>} Usuário atualizado ou null se não existir.
+   */
+  async updatePasswordAndClearResetCode(
+    id: number,
+    newPassword: string
+  ): Promise<User | null> {
+    return prisma.user.update({
+      where: { id },
+      data: {
+        password: newPassword,
+        resetPasswordCode: null,
+        resetPasswordCodeExpiresAt: null,
+      },
     });
   }
 }

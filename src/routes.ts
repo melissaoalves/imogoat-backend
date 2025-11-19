@@ -23,6 +23,8 @@ const Multer = multer({
 
 routes.post("/create-user", new UserController().createUser);
 routes.post("/login", new UserController().signUser);
+routes.post("/forgot-password", new UserController().requestPasswordReset);
+routes.post("/reset-password", new UserController().resetPassword);
 routes.get("/user", new UserController().getAllUsers);
 routes.get("/user/:id", new UserController().getUserById);
 routes.put("/alter-user/:id", new UserController().updateUser);
