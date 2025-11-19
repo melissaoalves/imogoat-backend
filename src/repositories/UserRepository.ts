@@ -1,4 +1,4 @@
-import { PrismaClient, User, Prisma } from '@prisma/client';
+import { PrismaClient, User, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -20,7 +20,7 @@ export class UserRepository {
    */
   async findById(id: number): Promise<User | null> {
     return prisma.user.findUnique({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -32,7 +32,7 @@ export class UserRepository {
    */
   async findByEmail(email: string): Promise<User | null> {
     return prisma.user.findUnique({
-      where: { email }
+      where: { email },
     });
   }
 
@@ -49,8 +49,8 @@ export class UserRepository {
         email: data.email,
         password: data.password,
         phoneNumber: data.phoneNumber,
-        role: data.role
-      }
+        role: data.role,
+      },
     });
   }
 
@@ -64,7 +64,7 @@ export class UserRepository {
   async update(id: number, data: Prisma.UserUpdateInput): Promise<User | null> {
     return prisma.user.update({
       where: { id },
-      data
+      data,
     });
   }
 
@@ -76,7 +76,7 @@ export class UserRepository {
    */
   async delete(id: number): Promise<void> {
     await prisma.user.delete({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -88,13 +88,17 @@ export class UserRepository {
    * @param {Date} expiresAt - Data de expiração do código.
    * @returns {Promise<User | null>} Usuário atualizado ou null se não existir.
    */
-  async setPasswordResetCode(email: string, resetCode: string, expiresAt: Date): Promise<User | null> {
+  async setPasswordResetCode(
+    email: string,
+    resetCode: string,
+    expiresAt: Date
+  ): Promise<User | null> {
     return prisma.user.update({
       where: { email },
       data: {
         resetPasswordCode: resetCode,
-        resetPasswordCodeExpiresAt: expiresAt
-      }
+        resetPasswordCodeExpiresAt: expiresAt,
+      },
     });
   }
 
@@ -109,9 +113,9 @@ export class UserRepository {
       where: {
         resetPasswordCode: resetCode,
         resetPasswordCodeExpiresAt: {
-          gte: new Date()
-        }
-      }
+          gte: new Date(),
+        },
+      },
     });
   }
 
@@ -122,14 +126,17 @@ export class UserRepository {
    * @param {string} newPassword - Nova senha já criptografada.
    * @returns {Promise<User | null>} Usuário atualizado ou null se não existir.
    */
-  async updatePasswordAndClearResetCode(id: number, newPassword: string): Promise<User | null> {
+  async updatePasswordAndClearResetCode(
+    id: number,
+    newPassword: string
+  ): Promise<User | null> {
     return prisma.user.update({
       where: { id },
       data: {
         password: newPassword,
         resetPasswordCode: null,
-        resetPasswordCodeExpiresAt: null
-      }
+        resetPasswordCodeExpiresAt: null,
+      },
     });
   }
 }

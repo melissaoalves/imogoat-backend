@@ -1,5 +1,5 @@
-import nodemailer from 'nodemailer';
-import 'dotenv/config';
+import nodemailer from "nodemailer";
+import "dotenv/config";
 
 const email_pass = process.env.EMAIL_PASS as string;
 const email_user = process.env.EMAIL_USER as string;
@@ -9,11 +9,11 @@ export class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: email_user,
-        pass: email_pass
-      }
+        pass: email_pass,
+      },
     });
   }
 
@@ -25,11 +25,15 @@ export class EmailService {
    * @param {string} resetCode - Código de recuperação de 6 dígitos.
    * @returns {Promise<void>} Retorna void em caso de sucesso ou lança erro.
    */
-  async sendPasswordResetEmail(email: string, username: string, resetCode: string): Promise<void> {
+  async sendPasswordResetEmail(
+    email: string,
+    username: string,
+    resetCode: string
+  ): Promise<void> {
     const mailOptions = {
       from: email_user,
       to: email,
-      subject: 'Código de Recuperação de Senha - ImoGoat',
+      subject: "Código de Recuperação de Senha - ImoGoat",
       html: `
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
           <h2 style="color: #333; text-align: center;">Recuperação de Senha</h2>
@@ -43,14 +47,14 @@ export class EmailService {
           <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
           <p style="color: #888; font-size: 12px; text-align: center;">ImoGoat - Sistema de Gestão Imobiliária</p>
         </div>
-      `
+      `,
     };
 
     try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('Erro ao enviar email:', error);
-      throw new Error('Falha ao enviar email de recuperação');
+      console.error("Erro ao enviar email:", error);
+      throw new Error("Falha ao enviar email de recuperação");
     }
   }
 
@@ -65,7 +69,7 @@ export class EmailService {
     const mailOptions = {
       from: email_user,
       to: email,
-      subject: 'Bem-vindo ao ImoGoat! 🏠',
+      subject: "Bem-vindo ao ImoGoat! 🏠",
       html: `
         <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
           <h2 style="color: #007bff; text-align: center;">Bem-vindo ao ImoGoat! 🏠</h2>
@@ -82,13 +86,13 @@ export class EmailService {
           <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
           <p style="color: #888; font-size: 12px; text-align: center;">ImoGoat - Sistema de Gestão Imobiliária</p>
         </div>
-      `
+      `,
     };
 
     try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('Erro ao enviar email de boas-vindas:', error);
+      console.error("Erro ao enviar email de boas-vindas:", error);
     }
   }
 }
