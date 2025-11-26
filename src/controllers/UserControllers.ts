@@ -44,7 +44,7 @@ export class UserController {
     try {
       const hashP = await bcrypt.hash(String(password), 10);
       const user = await userRepository.create({ username, email, password: hashP, phoneNumber, role });
-      res.status(200).json({ message: 'Usuário criado com sucesso! '});
+      res.status(200).json({ message: 'Usuário criado com sucesso! ' });
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
@@ -183,6 +183,138 @@ export class UserController {
       }
     } catch (error) {
       console.error('Erro ao deletar usuário:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+
+  /**
+ * Envia um e-mail contendo um token JWT para redefinição de senha.
+ *
+ * @async
+ * @function sendResetEmail
+ * @param {Request} req - Objeto da requisição HTTP contendo o campo `email` no corpo.
+ * @param {Response} res - Objeto da resposta HTTP utilizado para retornar o status e mensagens.
+ * 
+ * @description
+ * - Verifica se o campo `email` foi enviado.
+ * - Busca o usuário no banco através do repositório.
+ * - Gera um token JWT válido por 1 hora.
+ * - Envia o token por e-mail usando o Gmail e Nodemailer.
+ *
+ * @returns {Promise<void>} Retorna uma resposta HTTP indicando sucesso ou erro.
+ * 
+ * @throws
+ * - 400: quando o email não é informado.
+ * - 404: quando o usuário não é encontrado.
+ * - 500: erro ao enviar o e-mail ou erro interno do servidor.
+ */
+  async sendResetEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        console.log(email);
+        res.status(400).json({ message: "O campo 'email' é obrigatório" });
+        return;
+      }
+
+      const user = await userRepository.findByEmail(email);
+      if (!user) {
+        res.status(404).json({ message: 'Usuário não encontrado' });
+        return;
+      }
+
+      const token = jwt.sign({ id: user.id }, jwt_pass, { expiresIn: '1h' });
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: email_user,
+          pass: email_pass
+        }
+      });
+
+      const info = await transporter.sendMail({
+        from: '"ImoGoat" <eduardosousa1718@gmail.com>',
+        to: email,
+        subject: 'Redefinição de Senha - ImoGoat',
+        text: `Olá,\n\nRecebemos sua solicitação para redefinir a senha. Copie o código abaixo e cole no aplicativo para continuar:\n\n${token}\n\nSe você não solicitou a redefinição, ignore este e-mail.\n\nAtenciosamente,\nEquipe ImoGoat`
+      }, (error, info) => {
+        if (error) {
+          console.log(error);
+          res.status(500).json({ message: 'Erro ao enviar email' });
+        } else {
+          res.status(200).json({ token });
+        }
+      });
+
+    } catch (error) {
+      console.error('Erro ao enviar email de redefinição:', error);
+      res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  }
+
+
+
+  /**
+   * Redefine a senha de um usuário usando o token JWT enviado anteriormente por e-mail.
+   *
+   * @async
+   * @function resetPassword
+   * @param {Request} req - Objeto da requisição HTTP contendo `token` e `novaSenha` no corpo.
+   * @param {Response} res - Objeto da resposta HTTP utilizado para retornar o status e mensagens.
+   * 
+   * @description
+   * - Valida os campos obrigatórios.
+   * - Decodifica o token JWT usando a chave secreta.
+   * - Verifica se o token é válido e contém um ID.
+   * - Busca o usuário correspondente ao ID no banco.
+   * - Gera um hash da nova senha usando bcrypt.
+   * - Atualiza a senha no banco.
+   *
+   * @returns {Promise<void>} Retorna uma mensagem indicando o status da redefinição.
+   * 
+   * @throws
+   * - 400: token ou senha ausentes / token inválido.
+   * - 404: quando o usuário associado ao token não é encontrado.
+   * - 500: erro interno do servidor.
+   */
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { token, novaSenha } = req.body;
+
+      if (!token || !novaSenha) {
+        res.status(400).json({ message: "Os campos 'token' e 'novaSenha' são obrigatórios" });
+        return;
+      }
+
+      let decodedToken: any;
+      try {
+        decodedToken = jwt.verify(token, jwt_pass);
+      } catch (err) {
+        res.status(400).json({ message: 'Token inválido' });
+        return;
+      }
+
+      if (!decodedToken || !decodedToken.id) {
+        res.status(400).json({ message: 'Token inválido' });
+        return;
+      }
+
+      const user = await userRepository.findById(decodedToken.id);
+      if (!user) {
+        res.status(404).json({ message: 'Usuário não encontrado' });
+        return;
+      }
+
+      const hashNewPassword = await bcrypt.hash(novaSenha, 10);
+      user.password = hashNewPassword;
+
+      await userRepository.update(user.id, user);
+
+      res.status(200).json({ message: 'Senha redefinida com sucesso' });
+
+    } catch (error) {
+      console.error('Erro ao resetar senha:', error);
       res.status(500).json({ message: 'Erro interno do servidor' });
     }
   }
