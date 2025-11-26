@@ -27,6 +27,8 @@ routes.get("/user", new UserController().getAllUsers);
 routes.get("/user/:id", new UserController().getUserById);
 routes.put("/alter-user/:id", new UserController().updateUser);
 routes.delete("/delete-user/:id", new UserController().deleteUser);
+routes.post('/esqueci', new UserController().sendResetEmail);
+routes.post('/trocarSenha', new UserController().resetPassword);
 
 routes.get("/immobile/:id", new ImmobileController().getImmobileById);
 routes.get("/immobile", new ImmobileController().getAllImmobiles);
